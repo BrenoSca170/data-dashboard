@@ -1,4 +1,3 @@
-
 // Local: src/main/java/br/com/datascience/processingservice/service/DataProcessingService.java
 package br.com.datascience.processingservice.service;
 
@@ -6,8 +5,10 @@ import br.com.datascience.processingservice.dto.AnalysisResult;
 import br.com.datascience.processingservice.dto.ColumnInfo;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import tech.tablesaw.api.NumericColumn;
 import tech.tablesaw.api.Row;
 import tech.tablesaw.api.Table;
+import tech.tablesaw.columns.Column;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -33,21 +34,35 @@ public class DataProcessingService {
 
         Table summary = dataTable.summary();
 
-        // ==================================================================
-        // INÍCIO DA CORREÇÃO: Usando índices de coluna (0, 1, 2)
-        // ==================================================================
         Map<String, Object> summaryMap = new HashMap<>();
         for (Row row : summary) {
-            // A estrutura da tabela de sumário é:
-            // Coluna 0: A estatística (ex: "Mean")
-            // Coluna 1: A coluna original (ex: "Idade")
-            // Coluna 2: O valor calculado (ex: 31.5)
             String key = row.getString(0) + " (" + row.getString(1) + ")";
             Object value = row.getObject(2);
             summaryMap.put(key, value);
         }
+
         // ==================================================================
-        // FIM DA CORREÇÃO
+        // INÍCIO DA NOVA LÓGICA: Estatísticas Detalhadas por Coluna
+        // ==================================================================
+        Map<String, Map<String, Object>> detailedStats = new HashMap<>();
+        for (Column<?> column : dataTable.columns()) {
+            Map<String, Object> statsForColumn = new HashMap<>();
+            
+            // Adiciona a contagem de valores únicos para todas as colunas
+            statsForColumn.put("uniqueValues", column.unique().size());
+
+            // Se a coluna for numérica, calcula estatísticas adicionais
+            if (column instanceof NumericColumn) {
+                NumericColumn<?> numericColumn = (NumericColumn<?>) column;
+                statsForColumn.put("median", numericColumn.median());
+                statsForColumn.put("stdDeviation", numericColumn.standardDeviation());
+                statsForColumn.put("sum", numericColumn.sum());
+            }
+            
+            detailedStats.put(column.name(), statsForColumn);
+        }
+        // ==================================================================
+        // FIM DA NOVA LÓGICA
         // ==================================================================
 
         return AnalysisResult.builder()
@@ -55,6 +70,7 @@ public class DataProcessingService {
                 .rowCount(rowCount)
                 .columnDetails(columnDetails)
                 .summaryStatistics(summaryMap)
+                .detailedStatistics(detailedStats) // <-- ADICIONA OS NOVOS DADOS À RESPOSTA
                 .build();
     }
 }

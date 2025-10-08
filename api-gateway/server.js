@@ -84,9 +84,7 @@ function verifyToken(req, res, next) {
 }
 
 // ROTA PROTEGIDA DE UPLOAD
-// A rota de upload agora usa o middleware 'verifyToken'
 app.post('/api/upload', verifyToken, upload.single('file'), async (req, res) => {
-    console.log(`Utilizador ${req.user.email} está a fazer upload de um ficheiro.`);
     if (!req.file) {
         return res.status(400).send({ message: 'Nenhum ficheiro enviado.' });
     }
@@ -96,6 +94,7 @@ app.post('/api/upload', verifyToken, upload.single('file'), async (req, res) => 
         contentType: req.file.mimetype,
     });
     try {
+        console.log(`Utilizador ${req.user.email} está a fazer upload de um ficheiro.`);
         const javaServiceUrl = 'http://localhost:8080/api/process-data';
         const response = await axios.post(javaServiceUrl, formData, {
             headers: { ...formData.getHeaders() },

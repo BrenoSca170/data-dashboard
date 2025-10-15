@@ -1,0 +1,30 @@
+
+services:
+  # Define o serviço do banco de dados
+  postgres-db:
+    # A imagem Docker que será usada. "postgres:15" é uma versão popular e estável.
+    image: postgres:15
+    # Nome do container. Útil para o identificar.
+    container_name: meu-projeto-postgres
+    # Configurações de ambiente (variáveis) para o container do PostgreSQL.
+    environment:
+      # Define o utilizador 'root' para o banco de dados.
+      POSTGRES_USER: root
+      # Define a password para o utilizador 'root'. Em produção, use algo mais seguro!
+      POSTGRES_PASSWORD: root
+      # Define o nome do banco de dados que será criado quando o container iniciar.
+      POSTGRES_DB: datadashboard
+    # Mapeia a porta 5432 do container (porta padrão do PostgreSQL)
+    # para a porta 5432 do seu computador. É assim que a sua aplicação Java se irá conectar.
+    ports:
+      - "5432:5432"
+    # (Opcional) Define um volume. Isto garante que os seus dados persistam
+    # mesmo que o container seja removido e recriado.
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    # Reinicia o container automaticamente se ele falhar.
+    restart: unless-stopped
+
+volumes:
+  # Declara o volume que usamos acima. O Docker irá geri-lo.
+  postgres_data:

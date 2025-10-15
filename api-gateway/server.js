@@ -8,14 +8,11 @@ const FormData = require('form-data');
 const bodyParser = require('body-parser');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
-
+const AUTH_SERVICE_URL = 'http://localhost:8081/api/auth';
 // --- CONFIGURAÇÃO ---
 const app = express();
 const PORT = 3000;
 const JWT_SECRET = 'allani-ama-o-luisinho'; // Mude isto para uma frase segura em produção
-
-// --- DADOS (Simulando uma base de dados) ---
-const users = [];
 
 // --- MIDDLEWARES ---
 app.use(cors());
@@ -32,38 +29,30 @@ const upload = multer({ storage: storage });
 app.get('/', (req, res) => {
     res.send('API Gateway está a funcionar!');
 });
-
-// ROTA DE REGISTO
+// ROTA DE REGISTO (PROXY)
 app.post('/auth/register', async (req, res) => {
     try {
-        const { email, password } = req.body;
-        if (users.find(user => user.email === email)) {
-            return res.status(400).json({ message: 'Utilizador já existe.' });
-        }
-        const hashedPassword = await bcrypt.hash(password, 10);
-        const newUser = { id: users.length + 1, email, password: hashedPassword };
-        users.push(newUser);
-        console.log('Novo utilizador registado:', newUser);
-        res.status(201).json({ message: 'Utilizador registado com sucesso!' });
+        // Apenas reencaminha o pedido para o serviço Spring Boot
+        const response = await axios.post(`${AUTH_SERVICE_URL}/register`, req.body);
+        // E devolve a resposta do serviço diretamente para o frontend
+        res.status(response.status).json(response.data);
     } catch (error) {
-        res.status(500).json({ message: 'Erro ao registar utilizador.' });
+        const status = error.response ? error.response.status : 500;
+        const data = error.response ? error.response.data : { message: 'Erro interno no gateway.' };
+        res.status(status).json(data);
     }
 });
-
-// ROTA DE LOGIN
+// ROTA DE LOGIN (PROXY)
 app.post('/auth/login', async (req, res) => {
     try {
-        const { email, password } = req.body;
-        const user = users.find(user => user.email === email);
-        if (!user || !(await bcrypt.compare(password, user.password))) {
-            return res.status(401).json({ message: 'Email ou palavra-passe inválidos.' });
-        }
-        const token = jwt.sign({ userId: user.id, email: user.email }, JWT_SECRET, {
-            expiresIn: '1h'
-        });
-        res.json({ message: 'Login bem-sucedido!', token });
+        // Apenas reencaminha o pedido para o serviço Spring Boot
+        const response = await axios.post(`${AUTH_SERVICE_URL}/login`, req.body);
+        // E devolve a resposta (com o token gerado pelo Spring) para o frontend
+        res.status(response.status).json(response.data);
     } catch (error) {
-        res.status(500).json({ message: 'Erro ao fazer login.' });
+        const status = error.response ? error.response.status : 401;
+        const data = error.response ? error.response.data : { message: 'Erro interno no gateway.' };
+        res.status(status).json(data);
     }
 });
 

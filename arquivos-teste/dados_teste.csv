@@ -1,5 +1,4 @@
-Nome,Idade,Cidade
-Ana,28,Sao Paulo
-Bruno,35,Rio de Janeiro
-Carla,22,Belo Horizonte
-Daniel,41,Salvador
+data_transacao,valor_liquido,categoria_produto,regiao,canal_venda
+2025-01-15,150.50,Eletronicos,Sudeste,Online
+2025-01-16,30.99,Livros,Sul,Loja Fisica
+2025-01-17,999.00,Moveis,Nordeste,Online
